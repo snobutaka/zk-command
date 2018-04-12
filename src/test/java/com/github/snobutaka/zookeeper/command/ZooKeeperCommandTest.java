@@ -1,7 +1,9 @@
 package com.github.snobutaka.zookeeper.command;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
 
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
@@ -15,7 +17,7 @@ public class ZooKeeperCommandTest {
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        // Enable ZooKeeper (TestingServer) to execute four letter word commands
+        // Enable ZooKeeper (TestingServer) to execute all four letter words commands
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");
     }
 
@@ -31,10 +33,20 @@ public class ZooKeeperCommandTest {
         }
     }
 
+    ZooKeeperCommand getZkCommand() {
+        return new ZooKeeperCommand("localhost", zkServer.getPort());
+    }
+
     @Test
-    public void testAreYouOK() throws Exception {
-        ZooKeeperCommand zkCommand = new ZooKeeperCommand("localhost", zkServer.getPort());
-        String res = zkCommand.areYouOK();
-        assertThat(res, is("imok"));
+    public void testAreYouOk() throws IOException {
+        ZooKeeperCommand zkCommand = getZkCommand();
+        assertTrue(zkCommand.areYouOk());
+    }
+
+    @Test(expected = IOException.class)
+    public void testAreYouOkWhenZooKeeperIsDown() throws Exception {
+        ZooKeeperCommand zkCommand = getZkCommand();
+        this.zkServer.stop();
+        assertFalse(zkCommand.areYouOk());
     }
 }
